@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include "present.h"
+#include "util.h"
 #include "hexprint.h"
 
 const bool Present::DEBUG = true;
@@ -18,6 +19,7 @@ void Present::GenerateRoundKeys80(Key key, RoundKeys& rkey)
 	const unsigned int kHighSize = 64;
 	const unsigned int kLowSize = 16;
 	const unsigned int kShift = 19;
+	const unsigned int kRoundAddTarget = 15;
 
 	if (DEBUG) {
 		if ((key.low >> kLowSize) != 0)
@@ -28,7 +30,7 @@ void Present::GenerateRoundKeys80(Key key, RoundKeys& rkey)
 		std::cout << "Start GenerateRoundKeys:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
 	}
 
-	for (uint_fast16_t round = 0; round < kRounds; ) {
+	for (uint64_t round = 0; round < kRounds; ) {
 		//set round key
 		rkey[round] = key.high;
 
@@ -39,17 +41,17 @@ void Present::GenerateRoundKeys80(Key key, RoundKeys& rkey)
 		//step1
 		uint64_t keyhigh = key.high;
 		key.high = (keyhigh >> kShift) ^ (keyhigh << (kHighSize + kLowSize - kShift)) ^ (key.low << (kHighSize - kShift));
-		key.low = (keyhigh >> (kShift - kLowSize)) & ((UINT64_C(1) << kLowSize) - 1);
+		key.low = (keyhigh >> (kShift - kLowSize)) & util::BitUtil<uint64_t>::LowBitMask(kLowSize);
 
 		//step2
-		key.high = (kSbox[key.high >> (kHighSize - kSboxBits)] << (kHighSize - kSboxBits)) ^ (key.high & ((UINT64_C(1) << (kHighSize - kSboxBits)) - 1));
+		key.high = (kSbox[key.high >> (kHighSize - kSboxBits)] << (kHighSize - kSboxBits)) ^ (key.high & util::BitUtil<uint64_t>::LowBitMask(kHighSize - kSboxBits));
 
 		//increment round
 		++round;
 
 		//step3
-		key.high ^= (round >> 1);
-		key.low ^= ((round & 0x1) << 15);
+		key.high ^= (round >> (kLowSize - kRoundAddTarget));
+		key.low ^= ((round & util::BitUtil<uint64_t>::LowBitMask(kLowSize - kRoundAddTarget)) << kRoundAddTarget);
 	}
 
 	if (DEBUG) {
