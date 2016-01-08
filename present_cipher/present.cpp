@@ -43,8 +43,16 @@ void Present::GenerateRoundKeys80(Key key, RoundKeys& rkey)
 		key.high = (keyhigh >> kShift) ^ (keyhigh << (kHighSize + kLowSize - kShift)) ^ (key.low << (kHighSize - kShift));
 		key.low = (keyhigh >> (kShift - kLowSize)) & util::BitUtil<uint64_t>::LowBitMask(kLowSize);
 
+		if (DEBUG) {
+			std::cout << "-AfterShift:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+		}
+
 		//step2
 		key.high = (kSbox[key.high >> (kHighSize - kSboxBits)] << (kHighSize - kSboxBits)) ^ (key.high & util::BitUtil<uint64_t>::LowBitMask(kHighSize - kSboxBits));
+
+		if (DEBUG) {
+			std::cout << "-AfterSbox:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+		}
 
 		//increment round
 		++round;
@@ -52,6 +60,10 @@ void Present::GenerateRoundKeys80(Key key, RoundKeys& rkey)
 		//step3
 		key.high ^= (round >> (kLowSize - kRoundAddTarget));
 		key.low ^= ((round & util::BitUtil<uint64_t>::LowBitMask(kLowSize - kRoundAddTarget)) << kRoundAddTarget);
+
+		if (DEBUG) {
+			std::cout << "-AfterAddRound:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+		}
 	}
 
 	if (DEBUG) {
