@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <type_traits>
 #include <limits>
+#include "util.h"
 
 namespace util {
 
@@ -17,7 +18,7 @@ namespace util {
 
 	public:
 		HexPrint() = delete;
-		HexPrint(const T& value, std::size_t size = std::numeric_limits<typename std::make_unsigned<T>::type>::digits) : value_(value), size_(size)
+		HexPrint(const T& value, std::size_t size = BitUtil<T>::digits) : value_(value), size_(size)
 		{
 		}
 
