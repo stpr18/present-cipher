@@ -16,13 +16,13 @@ private:
 
 	using SboxType = std::array<uint64_t, kSboxSize>;
 	using PboxType = std::array<uint64_t, 64>;
-	using RoundKeys = std::array<uint64_t, kRounds>;
 
 	static const SboxType kSbox;
 	static const PboxType kPbox;
 
 public:
 	using Block = uint64_t;
+	using RoundKeys = std::array<uint64_t, kRounds>;
 
 	struct Key
 	{
@@ -66,6 +66,16 @@ public:
 	void GenerateRoundKeys128(Key key)
 	{
 		GenerateRoundKeys128(key, rkey_);
+	}
+
+	void GetRoundKeys(RoundKeys& rkey)
+	{
+		rkey = rkey_;
+	}
+
+	RoundKeys GetRoundKeys()
+	{
+		return rkey_;
 	}
 
 	Block Encrypt(Block plain)
