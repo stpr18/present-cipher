@@ -3,7 +3,7 @@
 #include "util.h"
 #include "hexprint.h"
 
-const bool Present::DEBUG = true;
+const bool Present::DEBUG = false;
 
 Present::Present()
 {
