@@ -71,6 +71,66 @@ void Present::GenerateRoundKeys80(Key key, RoundKeys& rkey)
 	}
 }
 
+void Present::GenerateRoundKeys128(Key key, RoundKeys& rkey)
+{
+	const unsigned int kHighSize = 64;
+	const unsigned int kLowSize = 64;
+	const unsigned int kShift = 67;
+	const unsigned int kRoundAddTarget = 62;
+
+	//if (DEBUG) {
+	//	if ((key.low >> kLowSize) != 0)
+	//		throw std::invalid_argument("key.low is not 16bit integer");
+	//}
+
+	if (DEBUG) {
+		std::cout << "Start GenerateRoundKeys:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+	}
+
+	for (uint64_t round = 0; round < kRounds; ) {
+		//set round key
+		rkey[round] = key.high;
+
+		if (DEBUG) {
+			std::cout << "Round" << std::setfill('0') << std::setw(2) << (round + 1) << ":" << util::HexPrint<uint64_t>(key.high) << std::endl;
+		}
+
+		//step1
+		uint64_t keyhigh = key.high;
+		key.high = (keyhigh << (kHighSize + kLowSize - kShift)) ^ (key.low >> (kShift - kHighSize));
+		key.low = (key.low << (kHighSize + kLowSize - kShift)) ^ (keyhigh >> (kShift - kLowSize));
+
+		if (DEBUG) {
+			std::cout << "-AfterShift:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+		}
+
+		//step2
+		key.high =
+			(kSbox[key.high >> (kHighSize - kSboxBits)] << (kHighSize - kSboxBits)) ^
+			(kSbox[(key.high >> (kHighSize - kSboxBits * 2)) & util::BitUtil<uint64_t>::LowBitMask(kSboxBits)] << (kHighSize - kSboxBits * 2)) ^
+			(key.high & util::BitUtil<uint64_t>::LowBitMask(kHighSize - kSboxBits * 2));
+
+		if (DEBUG) {
+			std::cout << "-AfterSbox:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+		}
+
+		//increment round
+		++round;
+
+		//step3
+		key.high ^= (round >> (kLowSize - kRoundAddTarget));
+		key.low ^= ((round & util::BitUtil<uint64_t>::LowBitMask(kLowSize - kRoundAddTarget)) << kRoundAddTarget);
+
+		if (DEBUG) {
+			std::cout << "-AfterAddRound:" << KeyPrint(key, kHighSize, kLowSize) << std::endl;
+		}
+	}
+
+	if (DEBUG) {
+		std::cout << "End GenerateRoundKeys" << std::endl;
+	}
+}
+
 Present::Block Present::Encrypt(Block plain, const RoundKeys& rkey)
 {
 	if (DEBUG) {

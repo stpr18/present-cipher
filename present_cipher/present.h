@@ -55,11 +55,17 @@ public:
 	~Present();
 
 	static void GenerateRoundKeys80(Key key, RoundKeys& rkey);
+	static void GenerateRoundKeys128(Key key, RoundKeys& rkey);
 	static Block Encrypt(Block plain, const RoundKeys& rkey);
 
 	void GenerateRoundKeys80(Key key)
 	{
 		GenerateRoundKeys80(key, rkey_);
+	}
+
+	void GenerateRoundKeys128(Key key)
+	{
+		GenerateRoundKeys128(key, rkey_);
 	}
 
 	Block Encrypt(Block plain)
